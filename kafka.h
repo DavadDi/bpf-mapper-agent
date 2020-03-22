@@ -3,7 +3,7 @@
 
 #include <librdkafka/rdkafka.h>
 
-const char *brokers, *topic;
+const char *kafka_brokers, *kafka_topic;
 
 rd_kafka_t * create_kafka_inst(const char *brokers);
 void close_kafka_inst(rd_kafka_t *rk);

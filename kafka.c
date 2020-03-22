@@ -55,20 +55,20 @@ void send_message(rd_kafka_t *rk, char *buf){
 retry:
 	err = rd_kafka_producev(
 		rk, // Producer handle
-		RD_KAFKA_V_TOPIC(topic),  // Topic name
+		RD_KAFKA_V_TOPIC(kafka_topic),  // Topic name
 		RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),  // Make a copy of the payload.
 		RD_KAFKA_V_VALUE(buf, len),  // Message value and length
 		RD_KAFKA_V_OPAQUE(NULL),  // Per-Message opaque, provided in delivery report callback as msg_opaque.
 		RD_KAFKA_V_END);  // End sentinel
 
 	if (err) {
-		fprintf(stderr, "%% Failed to produce to topic %s: %s\n", topic, rd_kafka_err2str(err));
+		fprintf(stderr, "%% Failed to produce to topic %s: %s\n", kafka_topic, rd_kafka_err2str(err));
 		if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
 			rd_kafka_poll(rk, 1000);
 			goto retry;
 		}
 	} else {
-		fprintf(stderr, "%% Enqueued message (%zd bytes) for topic %s\n", len, topic);
+		fprintf(stderr, "%% Enqueued message (%zd bytes) for topic %s\n", len, kafka_topic);
 	}
 
 	rd_kafka_poll(rk, 0);

@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include "bpf.h"
 #include "bpf_mapper_sync2.h"
+#include "kafka.h"
 
 static int map_get(char *map_name) {
 	char pinned_file[256];
@@ -58,8 +59,20 @@ static bool lookup_map_by_last_key(
 }
 
 int main(int argc, char **argv) {
-	int map_fd = -1;
+	if (argc != 3) {
+		fprintf(stderr, "%% Usage: %s <broker> <topic>\n", argv[0]);
+		return 1;
+	}
+	kafka_brokers = argv[1];
+	kafka_topic = argv[2];
+	rd_kafka_t * rk = create_kafka_inst(kafka_brokers);
+	if(rk == NULL){
+		fprintf(stderr, "could not create kafka producer\n");
+		return 1;
+	}
 
+
+	int map_fd = -1;
 	map_fd = map_get(CT_MAP);
 	if (map_fd < 0) {
 		fprintf(stderr, "could not find map %s: %s\n", CT_MAP, strerror(errno));
@@ -77,8 +90,30 @@ int main(int argc, char **argv) {
 		if(!is_succ){
 			break;
 		}
+
+		char msg_str[400];
+		snprintf(msg_str, sizeof(msg_str), jsonStr,
+				curr_msg->saddr,
+				curr_msg->sport,
+				curr_msg->daddr,
+				curr_msg->dport,
+				curr_msg->entry->rx_packets,
+				curr_msg->entry->rx_bytes,
+				curr_msg->entry->tx_packets,
+				curr_msg->entry->tx_bytes,
+				curr_msg->entry->lifetime,
+				curr_msg->entry->rx_closing,
+				curr_msg->entry->tx_closing,
+				curr_msg->entry->seen_non_syn,
+				curr_msg->entry->tx_flags_seen,
+				curr_msg->entry->rx_flags_seen,
+				curr_msg->entry->last_tx_report,
+				curr_msg->entry->last_rx_report);
+		send_message(rk, msg_str);
+
 		key = next_key;
 	}
 
 	close(map_fd);
+	close_kafka_inst(rk);
 }

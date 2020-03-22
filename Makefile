@@ -7,9 +7,11 @@ COMMONOBJS = bpf.o
 TESTPROG= bpf_mapper_sync2
 TESTOBJS = $(TESTPROG).o
 
-PROGS= $(TESTPROG)
+KAFKAPROG= kafka
+KAFKAOBJS= $(KAFKAPROG).o
 
-OBJS= $(COMMONOBJS) $(TESTOBJS)
+PROGS= $(TESTPROG) $(KAFKAPROG)
+OBJS= $(COMMONOBJS) $(TESTOBJS) $(KAFKAOBJS)
 
 linuxhdrs ?= /usr/src/linux-headers-5.3.0-40
 
@@ -36,4 +38,4 @@ clean:
 	$(CC) $(DEBUG_FLAGS) -g -Wno-unused-variable -I../include $(LINUXINCLUDE) -c -o $@ $< $(CFLAGS)
 
 $(PROGS): $(OBJS)
-	$(CC) -g -o $@ $(@).o $(COMMONOBJS) $(CFLAGS) $(LDLIBS)
+	$(CC) -g -o $@ $(@).o $(COMMONOBJS) $(KAFKAOBJS) $(CFLAGS) $(LDLIBS) -lrdkafka

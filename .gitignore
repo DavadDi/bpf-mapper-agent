@@ -3,3 +3,6 @@
 /bpf.o
 /bpf_mapper_sync
 /bpf_mapper_sync.o
+/bpf_mapper_sync2
+/bpf_mapper_sync2.o
+/kafka.o
