@@ -108,16 +108,16 @@ int main(int argc, char **argv) {
 			break;
 		}
 
-		fprintf(stdout, "Key: srcIP=%s, srcPort=%d, dstIP=%s, dstPort=%d; "
-				+ "Entry: tx_packets=%lld, rx_packets=%lld\n",
-				int_to_ip(htonl(next_key->saddr)),
-				htons(next_key->sport),
-				int_to_ip(htonl(next_key->daddr)),
-				htons(next_key->dport),
-				map_entry->tx_packets,
-				map_entry->rx_packets);
+		char * srcAddr = int_to_ip(htonl(next_key->saddr));
+		uint16_t srcPort = htons(next_key->sport);
+		char * dstAddr = int_to_ip(htonl(next_key->daddr));
+		uint16_t dstPort = htons(next_key->dport);
 
+		fprintf(stdout, "Key: srcIP=%s|srcPort=%d|dstIP=%s|dstPort=%d; Entry: tx_packets=%lld|rx_packets=%lld\n",
+				srcAddr, srcPort, dstAddr, dstPort, map_entry->tx_packets, map_entry->rx_packets);
 		copy_key(key, next_key);
+
+
 	}
 
 	free(key);

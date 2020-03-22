@@ -4,7 +4,7 @@
 
 COMMONOBJS = bpf.o
 
-TESTPROG= bpf_mapper_sync
+TESTPROG= bpf_mapper_sync2
 TESTOBJS = $(TESTPROG).o
 
 PROGS= $(TESTPROG)
