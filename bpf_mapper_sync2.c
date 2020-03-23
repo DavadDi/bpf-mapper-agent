@@ -25,16 +25,11 @@ static char* int_to_ip(uint32_t num){
 	return ipstr;
 }
 
-static void init_key(struct ipv4_ct_tuple *key){
-	struct ipv4_ct_tuple tmp = {};
-	key = &tmp;
-}
-
 static bool lookup_map_by_last_key(
 		int map_fd,
 		struct ipv4_ct_tuple *last_key,
 		struct ipv4_ct_tuple *key,
-		struct kafka_msg* my_msg){
+		char * msg_str){
 
 	if(bpf_map_get_next_key(map_fd, (void *)last_key, (void *)key) < 0){
 		fprintf(stderr, "error when get next key: %s\n", strerror(errno));
@@ -47,14 +42,25 @@ static bool lookup_map_by_last_key(
 		return false;
 	}
 
-	struct kafka_msg tmp_msg = {
-		.saddr = int_to_ip(htonl(key->saddr)),
-		.sport = htons(key->sport),
-		.daddr = int_to_ip(htonl(key->daddr)),
-		.dport = htons(key->dport),
-		.entry = &map_entry,
-	};
-	my_msg= &tmp_msg;
+	snprintf(msg_str, 400, jsonStr,
+			int_to_ip(htonl(key->saddr)),
+			htons(key->sport),
+			int_to_ip(htonl(key->daddr)),
+			htons(key->dport),
+			map_entry.rx_packets,
+			map_entry.rx_bytes,
+			map_entry.tx_packets,
+			map_entry.tx_bytes,
+			map_entry.lifetime,
+			map_entry.rx_closing,
+			map_entry.tx_closing,
+			map_entry.seen_non_syn,
+			map_entry.tx_flags_seen,
+			map_entry.rx_flags_seen,
+			map_entry.last_tx_report,
+			map_entry.last_rx_report);
+	fprintf(stdout, "%s\n", msg_str);
+
 	return true;
 }
 
@@ -79,41 +85,21 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	struct ipv4_ct_tuple *key;
-	struct ipv4_ct_tuple *next_key;
-
-	init_key(key);
+	struct ipv4_ct_tuple *key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
+	struct ipv4_ct_tuple *next_key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
 	while (true){
-		init_key(next_key);
-		struct kafka_msg* curr_msg;
-		bool is_succ = lookup_map_by_last_key(map_fd, key, next_key, curr_msg);
+		char curr_msg[400];
+		bool is_succ = lookup_map_by_last_key(map_fd, key, next_key, (char *) curr_msg);
 		if(!is_succ){
 			break;
 		}
 
-		char msg_str[400];
-		snprintf(msg_str, sizeof(msg_str), jsonStr,
-				curr_msg->saddr,
-				curr_msg->sport,
-				curr_msg->daddr,
-				curr_msg->dport,
-				curr_msg->entry->rx_packets,
-				curr_msg->entry->rx_bytes,
-				curr_msg->entry->tx_packets,
-				curr_msg->entry->tx_bytes,
-				curr_msg->entry->lifetime,
-				curr_msg->entry->rx_closing,
-				curr_msg->entry->tx_closing,
-				curr_msg->entry->seen_non_syn,
-				curr_msg->entry->tx_flags_seen,
-				curr_msg->entry->rx_flags_seen,
-				curr_msg->entry->last_tx_report,
-				curr_msg->entry->last_rx_report);
-		send_message(rk, msg_str);
-
-		key = next_key;
+		send_message(rk, curr_msg);
+		memcpy(key, next_key, sizeof(struct ipv4_ct_tuple));
 	}
 
+	free(key);
+	free(next_key);
 	close(map_fd);
 	close_kafka_inst(rk);
 }
