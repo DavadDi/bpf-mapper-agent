@@ -5,9 +5,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include "bpf.h"
 #include "bpf_mapper_sync2.h"
 #include "kafka.h"
+
+static volatile sig_atomic_t running = 1;
+
+static void stop(int sig){
+	running = 0;
+}
 
 static int map_get(char *map_name) {
 	char pinned_file[256];
@@ -84,7 +91,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	while(true){
+	signal(SIGINT, stop);
+
+	while(running){
 		struct ipv4_ct_tuple *key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
 		struct ipv4_ct_tuple *next_key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
 		while (true){
