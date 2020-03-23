@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-
 	int map_fd = -1;
 	map_fd = map_get(CT_MAP);
 	if (map_fd < 0) {
@@ -85,21 +84,26 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	struct ipv4_ct_tuple *key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
-	struct ipv4_ct_tuple *next_key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
-	while (true){
-		char curr_msg[400];
-		bool is_succ = lookup_map_by_last_key(map_fd, key, next_key, (char *) curr_msg);
-		if(!is_succ){
-			break;
+	while(true){
+		struct ipv4_ct_tuple *key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
+		struct ipv4_ct_tuple *next_key = (struct ipv4_ct_tuple *) malloc(sizeof(struct ipv4_ct_tuple));
+		while (true){
+			char curr_msg[400];
+			bool is_succ = lookup_map_by_last_key(map_fd, key, next_key, (char *) curr_msg);
+			if(!is_succ){
+				break;
+			}
+
+			send_message(rk, curr_msg);
+			memcpy(key, next_key, sizeof(struct ipv4_ct_tuple));
 		}
 
-		send_message(rk, curr_msg);
-		memcpy(key, next_key, sizeof(struct ipv4_ct_tuple));
+		free(key);
+		free(next_key);
+
+		sleep(1);
 	}
 
-	free(key);
-	free(next_key);
 	close(map_fd);
 	close_kafka_inst(rk);
 }

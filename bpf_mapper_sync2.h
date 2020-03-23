@@ -4,7 +4,7 @@
 #define	MAP_PREFIX	"/sys/fs/bpf/tc/globals"
 #define CT_MAP "CT_MAP_TCP4"
 
-const char* jsonStr = "{'saddr':'%s', 'sport':%d, 'daddr':'%s', 'dport':%d, 'rx_packets':%lld, 'rx_bytes':%lld, 'tx_packets':%lld, 'tx_bytes':%lld, 'lifetime':%d, 'rx_closing':%d, 'tx_closing':%d, 'seen_non_sync':%d, 'tx_flags_seen':%d, 'rx_flags_seen':%d, 'last_tx_report':%d, 'last_rx_report':%d}";
+const char* jsonStr = "{{'saddr':'%s', 'sport':%d, 'daddr':'%s', 'dport':%d}, {'rx_packets':%lld, 'rx_bytes':%lld, 'tx_packets':%lld, 'tx_bytes':%lld, 'lifetime':%d, 'rx_closing':%d, 'tx_closing':%d, 'seen_non_sync':%d, 'tx_flags_seen':%d, 'rx_flags_seen':%d, 'last_tx_report':%d, 'last_rx_report':%d}}";
 
 struct ipv4_ct_tuple {
     __be32	daddr;
